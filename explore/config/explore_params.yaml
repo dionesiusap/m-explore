@@ -1,0 +1,19 @@
+# publish and subscribe
+costmap_topic: map
+costmap_updates_topic: map_updates
+visualize: true
+
+# timing
+planner_frequency: 10.0
+progress_timeout: 60.0
+
+# frontier construction
+min_frontier_size: 1.5
+
+# frontier cost weights
+potential_scale: 2.0
+gain_scale: 1.0
+orientation_scale: 0.0
+
+# others
+transform_tolerance: 0.3
