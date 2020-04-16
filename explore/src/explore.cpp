@@ -4,6 +4,7 @@
  *
  *  Copyright (c) 2008, Robert Bosch LLC.
  *  Copyright (c) 2015-2016, Jiri Horner.
+ *  Copyright (c) 2020, Dionesius Agung.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -97,7 +98,8 @@ Explore::~Explore()
 }
 
 void Explore::visualizeFrontiers(
-    const std::vector<frontier_exploration::Frontier>& frontiers)
+    const std::vector<frontier_exploration::Frontier>& frontiers,
+    const geometry_msgs::Point& target_position)
 {
   std_msgs::ColorRGBA blue;
   blue.r = 0;
@@ -114,6 +116,11 @@ void Explore::visualizeFrontiers(
   green.g = 1.0;
   green.b = 0;
   green.a = 1.0;
+  std_msgs::ColorRGBA purple;
+  purple.r = 1.0;
+  purple.g = 0;
+  purple.b = 1.0;
+  purple.a = 1.0;
 
   ROS_DEBUG("visualising %lu frontiers", frontiers.size());
   visualization_msgs::MarkerArray markers_msg;
@@ -156,14 +163,18 @@ void Explore::visualizeFrontiers(
     ++id;
     m.type = visualization_msgs::Marker::SPHERE;
     m.id = int(id);
-    m.pose.position = frontier.initial;
+    m.pose.position = frontier.centroid;
     // scale frontier according to its cost (costier frontiers will be smaller)
     double scale = std::min(std::abs(min_cost * 0.4 / frontier.cost), 0.5);
     m.scale.x = scale;
     m.scale.y = scale;
     m.scale.z = scale;
     m.points = {};
-    m.color = green;
+    if (frontier.centroid == target_position) {
+      m.color = purple;
+    } else {
+      m.color = green;
+    }
     markers.push_back(m);
     ++id;
   }
@@ -196,11 +207,6 @@ void Explore::makePlan()
     return;
   }
 
-  // publish frontiers as visualization markers
-  if (visualize_) {
-    visualizeFrontiers(frontiers);
-  }
-
   // find non blacklisted frontier
   auto frontier =
       std::find_if_not(frontiers.begin(), frontiers.end(),
@@ -212,6 +218,11 @@ void Explore::makePlan()
     return;
   }
   geometry_msgs::Point target_position = frontier->centroid;
+
+  // publish frontiers as visualization markers
+  if (visualize_) {
+    visualizeFrontiers(frontiers, target_position);
+  }
 
   // time out if we are not making any progress
   bool same_goal = prev_goal_ == target_position;

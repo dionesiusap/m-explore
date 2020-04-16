@@ -4,6 +4,7 @@
  *
  *  Copyright (c) 2008, Robert Bosch LLC.
  *  Copyright (c) 2015-2016, Jiri Horner.
+ *  Copyright (c) 2020, Dionesius Agung.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -77,7 +78,8 @@ private:
    * @brief  Publish a frontiers as markers
    */
   void visualizeFrontiers(
-      const std::vector<frontier_exploration::Frontier>& frontiers);
+      const std::vector<frontier_exploration::Frontier>& frontiers,
+      const geometry_msgs::Point& target_position);
 
   void reachedGoal(const actionlib::SimpleClientGoalState& status,
                    const move_base_msgs::MoveBaseResultConstPtr& result,
