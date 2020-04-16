@@ -1,4 +1,6 @@
 <launch>
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find explore_lite)/config/rosconsole.conf"/>
+
   <!-- Move base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <rosparam file="$(find rosbot_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
