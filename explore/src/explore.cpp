@@ -82,6 +82,10 @@ Explore::Explore()
   move_base_client_.waitForServer();
   ROS_INFO("Connected to move_base server");
 
+  start_time_ = ros::Time::now();
+  ROS_INFO_STREAM("Start: " << start_time_);
+  ROS_INFO("START");
+
   exploring_timer_ =
       relative_nh_.createTimer(ros::Duration(1. / planner_frequency_),
                                [this](const ros::TimerEvent&) { makePlan(); });
@@ -290,6 +294,10 @@ void Explore::stop()
   move_base_client_.cancelAllGoals();
   exploring_timer_.stop();
   ROS_INFO("Exploration stopped.");
+
+  end_time_ = ros::Time::now();
+  ros::Duration duration = end_time_ - start_time_;
+  ROS_INFO_STREAM("DURATION OF EXPLORATION: " << duration.toSec() << "secs");
 }
 
 }  // namespace explore

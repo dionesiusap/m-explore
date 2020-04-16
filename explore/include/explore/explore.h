@@ -108,6 +108,9 @@ private:
   double potential_scale_, orientation_scale_, gain_scale_;
   ros::Duration progress_timeout_;
   bool visualize_;
+
+  // sim timer
+  ros::Time start_time_, end_time_;
 };
 }
 
