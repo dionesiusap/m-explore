@@ -55,7 +55,7 @@ Explore::Explore()
   : private_nh_("~")
   , tf_listener_(ros::Duration(10.0))
   , costmap_client_(private_nh_, relative_nh_, &tf_listener_)
-  , move_base_client_("move_base")
+  , move_base_client_("move_base", true)
   , prev_distance_(0)
   , last_markers_count_(0)
 {
@@ -65,13 +65,18 @@ Explore::Explore()
   private_nh_.param("progress_timeout", timeout, 30.0);
   progress_timeout_ = ros::Duration(timeout);
   private_nh_.param("visualize", visualize_, false);
-  private_nh_.param("potential_scale", potential_scale_, 1e-3);
+  private_nh_.param("proximity_factor", proximity_factor_, 1e-3);
+  private_nh_.param("continuity_factor", continuity_factor_, 1e-3);
+  private_nh_.param("potential_factor", potential_factor_, 1e-3);
   private_nh_.param("orientation_scale", orientation_scale_, 0.0);
-  private_nh_.param("gain_scale", gain_scale_, 1.0);
+  private_nh_.param("gain_factor", gain_factor_, 1.0);
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
-                                                 potential_scale_, gain_scale_,
+                                                 proximity_factor_,
+                                                 continuity_factor_,
+                                                 potential_factor_, 
+                                                 gain_factor_,
                                                  min_frontier_size);
 
   if (visualize_) {
@@ -196,7 +201,7 @@ void Explore::makePlan()
   // find frontiers
   auto pose = costmap_client_.getRobotPose();
   // get frontiers sorted according to cost
-  auto frontiers = search_.searchFrom(pose.position);
+  auto frontiers = search_.searchFrom(pose.position, prev_goal_);
   ROS_DEBUG("found %lu frontiers", frontiers.size());
   for (size_t i = 0; i < frontiers.size(); ++i) {
     ROS_DEBUG("frontier %zd cost: %f", i, frontiers[i].cost);
@@ -227,10 +232,10 @@ void Explore::makePlan()
   // time out if we are not making any progress
   bool same_goal = prev_goal_ == target_position;
   prev_goal_ = target_position;
-  if (!same_goal || prev_distance_ > frontier->min_distance) {
+  if (!same_goal || prev_distance_ > frontier->avg_distance) {
     // we have different goal or we made some progress
     last_progress_ = ros::Time::now();
-    prev_distance_ = frontier->min_distance;
+    prev_distance_ = frontier->avg_distance;
   }
   // black list if we've made no progress for a long time
   if (ros::Time::now() - last_progress_ > progress_timeout_) {

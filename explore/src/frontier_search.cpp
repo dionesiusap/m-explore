@@ -1,6 +1,7 @@
 #include <explore/frontier_search.h>
 
 #include <mutex>
+#include<cmath>
 
 #include <costmap_2d/cost_values.h>
 #include <costmap_2d/costmap_2d.h>
@@ -15,22 +16,28 @@ using costmap_2d::NO_INFORMATION;
 using costmap_2d::FREE_SPACE;
 
 FrontierSearch::FrontierSearch(costmap_2d::Costmap2D* costmap,
-                               double potential_scale, double gain_scale,
+                               double proximity_factor,
+                               double continuity_factor,
+                               double potential_factor,
+                               double gain_factor,
                                double min_frontier_size)
   : costmap_(costmap)
-  , potential_scale_(potential_scale)
-  , gain_scale_(gain_scale)
+  , proximity_factor_(proximity_factor)
+  , continuity_factor_(continuity_factor)
+  , potential_factor_(potential_factor)
+  , gain_factor_(gain_factor)
   , min_frontier_size_(min_frontier_size)
 {
 }
 
-std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
+std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position,
+                                                 geometry_msgs::Point target)
 {
   std::vector<Frontier> frontier_list;
 
   // Sanity check that robot is inside costmap bounds before searching
-  unsigned int mx, my;
-  if (!costmap_->worldToMap(position.x, position.y, mx, my)) {
+  unsigned int map_pos_x, map_pos_y;
+  if (!costmap_->worldToMap(position.x, position.y, map_pos_x, map_pos_y)) {
     ROS_ERROR("Robot out of costmap bounds, cannot search for frontiers");
     return frontier_list;
   }
@@ -50,7 +57,7 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
   std::queue<unsigned int> bfs;
 
   // find closest clear cell to start search
-  unsigned int clear, pos = costmap_->getIndex(mx, my);
+  unsigned int clear, pos = costmap_->getIndex(map_pos_x, map_pos_y);
   if (nearestCell(clear, pos, FREE_SPACE, *costmap_)) {
     bfs.push(clear);
   } else {
@@ -62,7 +69,6 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
   while (!bfs.empty()) {
     unsigned int idx = bfs.front();
     bfs.pop();
-
     // iterate over 4-connected neighbourhood
     for (unsigned nbr : nhood4(idx, *costmap_)) {
       // add to queue all free, unvisited cells, use descending search in case
@@ -74,7 +80,7 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
         // neighbour)
       } else if (isNewFrontierCell(nbr, frontier_flag)) {
         frontier_flag[nbr] = true;
-        Frontier new_frontier = buildNewFrontier(nbr, pos, frontier_flag);
+        Frontier new_frontier = buildNewFrontier(nbr, pos, target, frontier_flag);
         if (new_frontier.size * costmap_->getResolution() >=
             min_frontier_size_) {
           frontier_list.push_back(new_frontier);
@@ -96,6 +102,7 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
 
 Frontier FrontierSearch::buildNewFrontier(unsigned int initial_cell,
                                           unsigned int reference,
+                                          geometry_msgs::Point target,
                                           std::vector<bool>& frontier_flag)
 {
   // initialize frontier structure
@@ -166,6 +173,17 @@ Frontier FrontierSearch::buildNewFrontier(unsigned int initial_cell,
   // average out frontier centroid
   output.centroid.x /= output.size;
   output.centroid.y /= output.size;
+  double avg_distance = sqrt(pow((double(reference_x) - double(output.centroid.x)), 2.0) +
+                             pow((double(reference_y) - double(output.centroid.y)), 2.0));
+  
+  double continuity_distance = sqrt(pow((double(target.x) - double(output.centroid.x)), 2.0) +
+                             pow((double(target.y) - double(output.centroid.y)), 2.0));
+
+  output.avg_distance = avg_distance;
+  output.continuity_distance = continuity_distance;
+
+  // std::cout << "continuity dist: " << continuity_distance;
+
   return output;
 }
 
@@ -190,8 +208,9 @@ bool FrontierSearch::isNewFrontierCell(unsigned int idx,
 
 double FrontierSearch::frontierCost(const Frontier& frontier)
 {
-  return (potential_scale_ * frontier.min_distance *
-          costmap_->getResolution()) -
-         (gain_scale_ * frontier.size * costmap_->getResolution());
+  return (proximity_factor_ * frontier.avg_distance * costmap_->getResolution()) +
+         (continuity_factor_ * frontier.continuity_distance * costmap_->getResolution()) +
+         (potential_factor_ * frontier.min_distance * costmap_->getResolution()) -
+         (gain_factor_ * frontier.size * costmap_->getResolution());
 }
 }

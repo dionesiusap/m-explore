@@ -8,11 +8,17 @@ planner_frequency: 10.0
 progress_timeout: 60.0
 
 # frontier construction
-min_frontier_size: 1.5
+# min_frontier_size: 5.0
+# min_frontier_size: 1.5
+min_frontier_size: 1.0
+# min_frontier_size: 0.5
+# min_frontier_size: 2.5
 
 # frontier cost weights
-potential_scale: 2.0
-gain_scale: 1.0
+proximity_factor: 3.0
+continuity_factor: 3.0
+potential_factor: 0.0
+gain_factor: 1.0e-2
 orientation_scale: 0.0
 
 # others

@@ -1,5 +1,5 @@
 <launch>
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find explore_lite)/config/rosconsole.conf"/>
+  <!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find explore_lite)/config/rosconsole.conf"/> -->
 
   <!-- Move base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log">
@@ -15,9 +15,5 @@
     <param name="move_base/DWAPlannerROS/yaw_goal_tolerance" value="1.0"/>
     <param name="move_base/DWAPlannerROS/xy_goal_tolerance" value="1.0"/>
 
-  </node>
-
-  <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
-    <rosparam file="$(find explore_lite)/config/explore_params.yaml" command="load" />
   </node>
 </launch>

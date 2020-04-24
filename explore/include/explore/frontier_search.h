@@ -12,6 +12,8 @@ namespace frontier_exploration
 struct Frontier {
   std::uint32_t size;
   double min_distance;
+  double avg_distance;
+  double continuity_distance;
   double cost;
   geometry_msgs::Point initial;
   geometry_msgs::Point centroid;
@@ -34,15 +36,17 @@ public:
    * @brief Constructor for search task
    * @param costmap Reference to costmap data to search.
    */
-  FrontierSearch(costmap_2d::Costmap2D* costmap, double potential_scale,
-                 double gain_scale, double min_frontier_size);
+  FrontierSearch(costmap_2d::Costmap2D* costmap, double proximity_factor,
+                 double potential_factor, double continuity_factor,
+                 double gain_factor, double min_frontier_size);
 
   /**
    * @brief Runs search implementation, outward from the start position
    * @param position Initial position to search from
    * @return List of frontiers, if any
    */
-  std::vector<Frontier> searchFrom(geometry_msgs::Point position);
+  std::vector<Frontier> searchFrom(geometry_msgs::Point position,
+                                   geometry_msgs::Point target);
 
 protected:
   /**
@@ -54,7 +58,9 @@ protected:
    * as frontiers
    * @return new frontier
    */
-  Frontier buildNewFrontier(unsigned int initial_cell, unsigned int reference,
+  Frontier buildNewFrontier(unsigned int initial_cell,
+                            unsigned int reference,
+                            geometry_msgs::Point target,
                             std::vector<bool>& frontier_flag);
 
   /**
@@ -70,7 +76,7 @@ protected:
 
   /**
    * @brief computes frontier cost
-   * @details cost function is defined by potential_scale and gain_scale
+   * @details cost function is defined by potential_factor and gain_factor
    *
    * @param frontier frontier for which compute the cost
    * @return cost of the frontier
@@ -81,7 +87,10 @@ private:
   costmap_2d::Costmap2D* costmap_;
   unsigned char* map_;
   unsigned int size_x_, size_y_;
-  double potential_scale_, gain_scale_;
+  double proximity_factor_;
+  double potential_factor_;
+  double continuity_factor_;
+  double gain_factor_;
   double min_frontier_size_;
 };
 }
