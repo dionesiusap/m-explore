@@ -1,7 +1,6 @@
 #include <explore/frontier_search.h>
 
 #include <mutex>
-#include<cmath>
 
 #include <costmap_2d/cost_values.h>
 #include <costmap_2d/costmap_2d.h>
@@ -179,6 +178,10 @@ Frontier FrontierSearch::buildNewFrontier(unsigned int initial_cell,
   double continuity_distance = sqrt(pow((double(target.x) - double(output.centroid.x)), 2.0) +
                              pow((double(target.y) - double(output.centroid.y)), 2.0));
 
+  if (continuity_distance == 0) {
+    std::cout << "ANJIIIING";
+  }
+
   output.avg_distance = avg_distance;
   output.continuity_distance = continuity_distance;
 
@@ -208,6 +211,9 @@ bool FrontierSearch::isNewFrontierCell(unsigned int idx,
 
 double FrontierSearch::frontierCost(const Frontier& frontier)
 {
+  if (frontier.continuity_distance == 0) {
+    std::cout << "ANJIIIING";
+  }
   return (proximity_factor_ * frontier.avg_distance * costmap_->getResolution()) +
          (continuity_factor_ * frontier.continuity_distance * costmap_->getResolution()) +
          (potential_factor_ * frontier.min_distance * costmap_->getResolution()) -
