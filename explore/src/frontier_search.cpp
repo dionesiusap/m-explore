@@ -15,17 +15,15 @@ using costmap_2d::NO_INFORMATION;
 using costmap_2d::FREE_SPACE;
 
 FrontierSearch::FrontierSearch(costmap_2d::Costmap2D* costmap,
+                               double alpha,
                                double proximity_factor,
-                               double continuity_factor,
-                               double potential_factor,
-                               double gain_factor,
-                               double min_frontier_size)
+                               double min_frontier_size,
+                               int exploration_strategy)
   : costmap_(costmap)
+  , alpha_(alpha)
   , proximity_factor_(proximity_factor)
-  , continuity_factor_(continuity_factor)
-  , potential_factor_(potential_factor)
-  , gain_factor_(gain_factor)
   , min_frontier_size_(min_frontier_size)
+  , exploration_strategy_(exploration_strategy)
 {
 }
 
@@ -89,12 +87,13 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position,
   }
 
   // set costs of frontiers
-  for (auto& frontier : frontier_list) {
-    frontier.cost = frontierCost(frontier);
-  }
-  std::sort(
-      frontier_list.begin(), frontier_list.end(),
-      [](const Frontier& f1, const Frontier& f2) { return f1.cost < f2.cost; });
+  calculateFrontierCost(frontier_list);
+  // for (auto& frontier : frontier_list) {
+  //   frontier.cost = frontierCost(frontier);
+  // }
+  // std::sort(
+  //     frontier_list.begin(), frontier_list.end(),
+  //     [](const Frontier& f1, const Frontier& f2) { return f1.cost < f2.cost; });
 
   return frontier_list;
 }
@@ -175,17 +174,7 @@ Frontier FrontierSearch::buildNewFrontier(unsigned int initial_cell,
   double avg_distance = sqrt(pow((double(reference_x) - double(output.centroid.x)), 2.0) +
                              pow((double(reference_y) - double(output.centroid.y)), 2.0));
   
-  double continuity_distance = sqrt(pow((double(target.x) - double(output.centroid.x)), 2.0) +
-                             pow((double(target.y) - double(output.centroid.y)), 2.0));
-
-  if (continuity_distance == 0) {
-    std::cout << "ANJIIIING";
-  }
-
   output.avg_distance = avg_distance;
-  output.continuity_distance = continuity_distance;
-
-  // std::cout << "continuity dist: " << continuity_distance;
 
   return output;
 }
@@ -209,14 +198,33 @@ bool FrontierSearch::isNewFrontierCell(unsigned int idx,
   return false;
 }
 
-double FrontierSearch::frontierCost(const Frontier& frontier)
+void FrontierSearch::calculateFrontierCost(std::vector<Frontier>& frontiers)
 {
-  if (frontier.continuity_distance == 0) {
-    std::cout << "ANJIIIING";
+  if (frontiers.size() > 0) {
+    if (exploration_strategy_ == 0) {
+      for (auto& frontier : frontiers) {
+        frontier.cost = frontier.avg_distance;
+      }
+    }
+    else if (exploration_strategy_ == 1) {
+      double min_dist = frontiers[0].min_distance;
+      std::uint32_t max_size = frontiers[0].size;
+      for (auto& frontier : frontiers) {
+        if (frontier.min_distance <= min_dist) {
+          min_dist = frontier.min_distance;
+        }
+        if (frontier.size >= max_size) {
+          max_size = frontier.size;
+        }
+      }
+      for (auto& frontier : frontiers) {
+        frontier.cost = (alpha_ * (frontier.min_distance / min_dist)) -
+                        ((1.0-alpha_) * ((double)frontier.size / (double)max_size));
+      }
+    }
+    std::sort(
+      frontiers.begin(), frontiers.end(),
+      [](const Frontier& f1, const Frontier& f2) { return f1.cost < f2.cost; });
   }
-  return (proximity_factor_ * frontier.avg_distance * costmap_->getResolution()) +
-         (continuity_factor_ * frontier.continuity_distance * costmap_->getResolution()) +
-         (potential_factor_ * frontier.min_distance * costmap_->getResolution()) -
-         (gain_factor_ * frontier.size * costmap_->getResolution());
 }
 }

@@ -62,24 +62,29 @@ Explore::Explore()
   , last_markers_count_(0)
 {
   double timeout;
+  double alpha;
+  double proximity_factor;
   double min_frontier_size;
+  int exploration_strategy;
   private_nh_.param("planner_frequency", planner_frequency_, 1.0);
   private_nh_.param("progress_timeout", timeout, 30.0);
   progress_timeout_ = ros::Duration(timeout);
   private_nh_.param("visualize", visualize_, false);
-  private_nh_.param("proximity_factor", proximity_factor_, 1e-3);
-  private_nh_.param("continuity_factor", continuity_factor_, 1e-3);
-  private_nh_.param("potential_factor", potential_factor_, 1e-3);
-  private_nh_.param("orientation_scale", orientation_scale_, 0.0);
-  private_nh_.param("gain_factor", gain_factor_, 1.0);
+  private_nh_.param("alpha", alpha, 0.5);
+  private_nh_.param("proximity_factor", proximity_factor, 1e-3);
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
+  private_nh_.param("exploration_strategy", exploration_strategy, 0);
+
+  if (exploration_strategy != 0 && exploration_strategy != 1) {
+    ROS_ERROR("FATAL: exploration_strategy param value must be eiter 0 or 1");
+    ros::shutdown();
+  }
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
-                                                 proximity_factor_,
-                                                 continuity_factor_,
-                                                 potential_factor_, 
-                                                 gain_factor_,
-                                                 min_frontier_size);
+                                                 alpha,
+                                                 proximity_factor,
+                                                 min_frontier_size,
+                                                 exploration_strategy);
 
   if (visualize_) {
     marker_array_publisher_ =
@@ -97,7 +102,7 @@ Explore::Explore()
   chrono_recorder::ExploreStatus srv;
   srv.request.status = 0;
   if (timer_trigger_client_.call(srv)) {
-  ROS_INFO("START");
+    ROS_INFO("START");
   }
 
   exploring_timer_ =
@@ -163,9 +168,9 @@ void Explore::visualizeFrontiers(
     m.type = visualization_msgs::Marker::POINTS;
     m.id = int(id);
     m.pose.position = {};
-    m.scale.x = 0.1;
-    m.scale.y = 0.1;
-    m.scale.z = 0.1;
+    m.scale.x = 0.05;
+    m.scale.y = 0.05;
+    m.scale.z = 0.05;
     m.points = frontier.points;
     if (goalOnBlacklist(frontier.centroid)) {
       m.color = red;

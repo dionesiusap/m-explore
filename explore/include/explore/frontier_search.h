@@ -13,7 +13,6 @@ struct Frontier {
   std::uint32_t size;
   double min_distance;
   double avg_distance;
-  double continuity_distance;
   double cost;
   geometry_msgs::Point initial;
   geometry_msgs::Point centroid;
@@ -36,9 +35,9 @@ public:
    * @brief Constructor for search task
    * @param costmap Reference to costmap data to search.
    */
-  FrontierSearch(costmap_2d::Costmap2D* costmap, double proximity_factor,
-                 double potential_factor, double continuity_factor,
-                 double gain_factor, double min_frontier_size);
+  FrontierSearch(costmap_2d::Costmap2D* costmap, double alpha,
+                 double proximity_factor, double min_frontier_size,
+                 int exploration_strategy);
 
   /**
    * @brief Runs search implementation, outward from the start position
@@ -81,17 +80,16 @@ protected:
    * @param frontier frontier for which compute the cost
    * @return cost of the frontier
    */
-  double frontierCost(const Frontier& frontier);
+  void calculateFrontierCost(std::vector<Frontier>& frontiers);
 
 private:
   costmap_2d::Costmap2D* costmap_;
   unsigned char* map_;
   unsigned int size_x_, size_y_;
+  double alpha_;
   double proximity_factor_;
-  double potential_factor_;
-  double continuity_factor_;
-  double gain_factor_;
   double min_frontier_size_;
+  int exploration_strategy_;
 };
 }
 #endif

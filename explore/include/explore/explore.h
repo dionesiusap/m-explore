@@ -108,11 +108,6 @@ private:
 
   // parameters
   double planner_frequency_;
-  double proximity_factor_;
-  double continuity_factor_;
-  double potential_factor_;
-  double gain_factor_;
-  double orientation_scale_;
   ros::Duration progress_timeout_;
   bool visualize_;
 

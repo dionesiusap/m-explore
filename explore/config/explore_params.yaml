@@ -5,21 +5,23 @@ visualize: true
 
 # timing
 planner_frequency: 5.0
-progress_timeout: 60.0
+progress_timeout: 30.0
 
 # frontier construction
 # min_frontier_size: 5.0
-min_frontier_size: 0.5
-# min_frontier_size: 1.0
+# min_frontier_size: 3.0
+min_frontier_size: 1.0
 # min_frontier_size: 0.5
 # min_frontier_size: 2.5
 
 # frontier cost weights
-proximity_factor: 3.0
-continuity_factor: 5.0
-potential_factor: 0.0
-gain_factor: 1.0e-2
-orientation_scale: 0.0
+alpha: 0.6
+proximity_factor: 5.0
+
+# exploration strategy
+# 0: closest centroid
+# 1: closest cell (+ IG)
+exploration_strategy: 1
 
 # others
 transform_tolerance: 0.3
