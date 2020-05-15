@@ -29,6 +29,8 @@
   <depend>tf</depend>
   <depend>costmap_2d</depend>
   <depend>actionlib</depend>
+  <exec_depend>chrono_recorder</exec_depend>
+  <build_depend>chrono_recorder</build_depend>
 
   <test_depend>roslaunch</test_depend>
 </package>

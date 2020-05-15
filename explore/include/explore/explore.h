@@ -90,6 +90,7 @@ private:
   ros::NodeHandle private_nh_;
   ros::NodeHandle relative_nh_;
   ros::Publisher marker_array_publisher_;
+  ros::ServiceClient timer_trigger_client_;
   tf::TransformListener tf_listener_;
 
   Costmap2DClient costmap_client_;

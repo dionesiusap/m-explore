@@ -37,7 +37,9 @@
  *********************************************************************/
 
 #include <explore/explore.h>
+#include "chrono_recorder/ExploreStatus.h"
 
+#include <signal.h>
 #include <thread>
 
 inline static bool operator==(const geometry_msgs::Point& one,
@@ -84,13 +86,19 @@ Explore::Explore()
         private_nh_.advertise<visualization_msgs::MarkerArray>("frontiers", 10);
   }
 
+  timer_trigger_client_ = private_nh_.serviceClient<chrono_recorder::ExploreStatus>("/timer_trigger");
+
+  timer_trigger_client_.waitForExistence();
+
   ROS_INFO("Waiting to connect to move_base server");
   move_base_client_.waitForServer();
   ROS_INFO("Connected to move_base server");
 
-  start_time_ = ros::Time::now();
-  ROS_INFO_STREAM("Start: " << start_time_);
+  chrono_recorder::ExploreStatus srv;
+  srv.request.status = 0;
+  if (timer_trigger_client_.call(srv)) {
   ROS_INFO("START");
+  }
 
   exploring_timer_ =
       relative_nh_.createTimer(ros::Duration(1. / planner_frequency_),
@@ -311,9 +319,11 @@ void Explore::stop()
   exploring_timer_.stop();
   ROS_INFO("Exploration stopped.");
 
-  end_time_ = ros::Time::now();
-  ros::Duration duration = end_time_ - start_time_;
-  ROS_INFO_STREAM("DURATION OF EXPLORATION: " << duration.toSec() << "secs");
+  chrono_recorder::ExploreStatus srv;
+  srv.request.status = 2;
+  if (timer_trigger_client_.call(srv)) {
+    ROS_INFO("STOPPED");
+  }
 }
 
 }  // namespace explore
