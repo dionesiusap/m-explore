@@ -222,6 +222,11 @@ void FrontierSearch::calculateFrontierCost(std::vector<Frontier>& frontiers)
                         ((1.0-alpha_) * ((double)frontier.size / (double)max_size));
       }
     }
+    else if (exploration_strategy_ == 2) {
+      for (auto& frontier : frontiers) {
+        frontier.cost = frontier.min_distance;
+      }
+    }
     std::sort(
       frontiers.begin(), frontiers.end(),
       [](const Frontier& f1, const Frontier& f2) { return f1.cost < f2.cost; });

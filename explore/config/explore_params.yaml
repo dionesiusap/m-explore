@@ -15,12 +15,16 @@ min_frontier_size: 1.0
 # min_frontier_size: 2.5
 
 # frontier cost weights
-alpha: 0.6
+# alpha: 0.8
+# alpha: 0.6
+# alpha: 0.4
+alpha: 0.2
 proximity_factor: 5.0
 
 # exploration strategy
 # 0: closest centroid
-# 1: closest cell (+ IG)
+# 1: closest cell + IG
+# 2: closest cell
 exploration_strategy: 1
 
 # others

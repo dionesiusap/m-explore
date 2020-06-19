@@ -75,8 +75,8 @@ Explore::Explore()
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
   private_nh_.param("exploration_strategy", exploration_strategy, 0);
 
-  if (exploration_strategy != 0 && exploration_strategy != 1) {
-    ROS_ERROR("FATAL: exploration_strategy param value must be eiter 0 or 1");
+  if (exploration_strategy != 0 && exploration_strategy != 1 && exploration_strategy != 2) {
+    ROS_ERROR("FATAL: exploration_strategy param value must be either 0, 1, or 2");
     ros::shutdown();
   }
 
@@ -183,16 +183,18 @@ void Explore::visualizeFrontiers(
     m.id = int(id);
     m.pose.position = frontier.centroid;
     // scale frontier according to its cost (costier frontiers will be smaller)
-    double scale = std::min(std::abs(min_cost * 0.4 / frontier.cost), 0.5);
+    // double scale = std::min(std::abs(min_cost * 0.4 / frontier.cost), 0.5);
+    double scale = 0.25;
     m.scale.x = scale;
     m.scale.y = scale;
     m.scale.z = scale;
     m.points = {};
-    if (frontier.centroid == target_position) {
-      m.color = purple;
-    } else {
-      m.color = green;
-    }
+    // if (frontier.centroid == target_position) {
+    //   m.color = purple;
+    // } else {
+    //   m.color = green;
+    // }
+    m.color = green;
     markers.push_back(m);
     ++id;
   }
